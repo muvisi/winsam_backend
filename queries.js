@@ -36,7 +36,7 @@ const getUserById = (request, response) => {
 const createUser = (request, response) => {
   const date=new Date()
   const uniqueRandomID = uuid.v4()
-  const { name='satoshi', email='satoshi@gmail.com',phone=0747511073,password="qwertyuiop",date_joined=date } = request.body
+  const { name='satoshi', email='satoshi@gmail.com',phone="0747511073",password="qwertyuiop",date_joined=date } = request.body
 
   pool.query('INSERT INTO accounts_accountmodel  (id,first_name, email,phone,password,date_joined) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [uniqueRandomID,name, email,phone,password,date_joined], (error, results) => {
     if (error) {
