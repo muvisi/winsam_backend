@@ -1,25 +1,20 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-const app = express()
-const db = require('./queries')
-const port = 3000
+const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+// const db = require('./queries'); // assumed to be updated for MongoDB
+const app = express();
+const port = 3001;
 
-app.use(bodyParser.json())
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-)
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/winsam_db')
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.error('MongoDB connection error:', err));
 
-
-
-
-
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+const db = require('./queries');
 
 
-app.get('/', (request, response) => {
-    response.json({ info: 'Node.js, Express, and Postgres API' })
-  })
   
   app.get('/users', db.getUsers)
   app.get('/user-profile', db.getUserById)

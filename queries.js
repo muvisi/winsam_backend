@@ -1,14 +1,33 @@
-const uuid = require('uuid')
-const Pool = require('pg').Pool
-const pool = new Pool({
-// const { v4: uuidv4 } = require('uuid')
-  user: 'mwangangi',
-  host: 'localhost',
-  database: 'rongai_test',
-  password: 'samuel1997',
-  port: 5432,
-})
 
+
+const express = require('express');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
+const User = require('./models/User');
+
+const app = express();
+app.use(express.json());
+
+// MongoDB Connection
+mongoose.connect('mongodb://localhost:27017/winsam_db').then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB error:', err));
+
+// POST /api/users - Create a user
+app.post('/api/users', async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data.id) {
+      data.id = uuidv4(); // generate UUID if not provided
+    }
+
+    const user = new User(data);
+    await user.save();
+
+    res.status(201).json({ message: 'User created', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 const getUsers = (request, response) => {
   pool.query('SELECT * FROM accounts_accountmodel ORDER BY date_joined ASC', (error, results) => {
@@ -74,10 +93,12 @@ const deleteUser = (request, response) => {
   })
 }
 
+// Start server
+app.listen(3000, () => console.log('Server running on http://localhost:3000'));
 module.exports = {
   getUsers,
   getUserById,
   createUser,
   updateUser,
-  deleteUser,
-}
+  deleteUser
+};
