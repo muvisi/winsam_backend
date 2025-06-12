@@ -3,7 +3,7 @@ const bodyParser = require('body-parser')
 
 
 const app = express()
-
+const usersRouter = require('./routes/users');
 const port = 3000
 app.use(bodyParser.json())
 app.use(
@@ -12,12 +12,12 @@ app.use(
   })
 )
 
-
+app.use('/api/users', usersRouter);
 app.get('/', (req, res) => {
     res.json({ info: 'Node.js, Express, and Postgres API' })
 
 
-    // res.send('Hello World!')
+    
 
 })
 

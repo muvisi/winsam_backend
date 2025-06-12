@@ -1,6 +1,6 @@
 // models/User.js
 const mongoose = require('mongoose');
-
+const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -61,5 +61,17 @@ const userSchema = new mongoose.Schema({
     default: []
   }
 });
+userSchema.pre('save', async function(next) {
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+  next();
+});
+
+// Add a method to compare passwords
+userSchema.methods.comparePassword = function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model('User', userSchema);
