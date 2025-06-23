@@ -1,6 +1,8 @@
 // controllers/userController.js
 const User = require('../models/User');
-
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = process.env.SECRET_KEY;
 exports.createUser = async (req, res) => {
 try {
     const data = req.body;
@@ -45,28 +47,66 @@ exports.getUser = async (req, res) => {
      res.status(500).json({ error: err.message });
    }
 };
-
 exports.updateUser = async (req, res) => {
-   try {
-      const updates = req.body;
-      const user = await User.findOneAndUpdate(
-        { id: req.params.id },
-        updates,
-        { new: true }
-      );
-  
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+  try {
+    const updates = { ...req.body };
+
+    // Skip email update if it's already in use
+    if (updates.email) {
+      const existingUser = await User.findOne({
+        email: updates.email,
+        id: { $ne: req.params.id }
+      });
+      if (existingUser) {
+        delete updates.email;
       }
-  
-      const userObj = user.toObject();
-      delete userObj.password;
-  
-      res.json({ message: 'User updated', user: userObj });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
     }
+
+    // Use custom "id" field instead of _id
+    const user = await User.findOneAndUpdate(
+      { id: req.params.id }, // <-- UUID field
+      updates,
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json({
+      message: 'User updated successfully',
+      user: userObj
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
+
+// exports.updateUser = async (req, res) => {
+//    try {
+//       const updates = req.body;
+//       const user = await User.findOneAndUpdate(
+//         { id: req.params.id },
+//         updates,
+//         { new: true }
+//       );
+  
+//       if (!user) {
+//         return res.status(404).json({ error: 'User not found' });
+//       }
+  
+//       const userObj = user.toObject();
+//       delete userObj.password;
+  
+//       res.json({ message: 'User updated', user: userObj });
+//     } catch (err) {
+//       res.status(500).json({ error: err.message });
+//     }
+// };
 
 exports.deleteUser = async (req, res) => {
    try {
@@ -81,3 +121,43 @@ exports.deleteUser = async (req, res) => {
       res.status(500).json({ error: err.message });
     }
 };
+
+
+exports.loginUser = async(req, res)=> {
+  try {
+    const { email, password } = req.body;
+
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+   
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+  
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      SECRET_KEY,
+      { expiresIn: '1h' }
+    );
+
+ 
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    
+    res.json({ message: 'Login successful', user: userObj, token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}

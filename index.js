@@ -8,6 +8,9 @@ const mongoose = require('mongoose');
 const app = express();
 const port = 3001;
 const usersRouter = require('./routes/users');
+const customersRouter = require('./routes/customer');
+
+
 
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/winsam_db')
@@ -19,6 +22,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // const db = require('./queries');
 
 app.use('/api/users', usersRouter);
+app.use('/api/customers', customersRouter);
   
   // app.get('/users', db.getUsers)
   // app.get('/user-profile', db.getUserById)
